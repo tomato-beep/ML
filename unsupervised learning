@@ -1,1 +1,281 @@
 
+import pandas as pd
+
+# Read the CSV file
+df = pd.read_csv("/content/Wine.csv")
+
+df.info()
+
+import pandas as pd
+
+# Assuming 'wines' is your DataFrame
+# Remove the fourteenth column (index 13)
+df = df.drop(df.columns[13], axis=1)
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Assuming 'wines' is your DataFrame
+
+# Melt DataFrame to long format
+melted = pd.melt(df.reset_index(), id_vars=['index'], var_name='Attributes', value_name='value')
+
+# Plot histograms
+plt.figure(figsize=(10, 6))
+for attr, data in melted.groupby('Attributes'):
+    plt.hist(data['value'], bins=20, alpha=0.5, label=attr)
+
+plt.xlabel('Values')
+plt.ylabel('Frequency')
+plt.title('Wines Attributes - Histograms')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Assuming 'wines' is your DataFrame
+
+# Melt DataFrame to long format
+melted = pd.melt(df.reset_index(), id_vars=['index'], var_name='Attributes', value_name='value')
+
+# Set the color palette
+palette = sns.color_palette("husl", len(melted['Attributes'].unique()))
+
+# Plot separate histograms for each attribute
+g = sns.FacetGrid(melted, col='Attributes', col_wrap=4, height=2, palette=palette)
+g.map(sns.histplot, 'value', bins=5, alpha=0.7)
+
+# Set titles and labels
+g.set_axis_labels('Values', 'Frequency')
+g.set_titles(col_template="{col_name}")
+
+plt.suptitle('Wines Attributes - Histograms', y=1.02)
+plt.tight_layout()
+plt.show()
+
+
+
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Assuming 'wines' is your DataFrame
+
+# Melt the DataFrame to long format
+melted = pd.melt(df, var_name='Attributes')
+
+# Create separate density plots for each attribute
+g = sns.FacetGrid(melted, col='Attributes', col_wrap=4, height=3, sharey=False)
+g.map(sns.kdeplot, 'value', fill=True, alpha=0.5, linewidth=1)
+g.set_axis_labels('Values', 'Density')
+g.set_titles('{col_name}')
+g.fig.suptitle('Wines Attributes - Density plots', y=1.05)
+plt.tight_layout()
+plt.show()
+
+
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Assuming 'wines' is your DataFrame
+
+# Calculate the correlation matrix
+correlation_matrix = df.corr()
+
+# Create a heatmap using seaborn
+plt.figure(figsize=(10, 8))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', linewidths=0.5)
+plt.title('Correlation Matrix')
+plt.show()
+
+
+
+   import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+
+# Assuming 'wines' is your DataFrame
+
+# Normalization
+scaler = StandardScaler()
+wines_norm = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
+
+# Original data plot
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.scatter(df['Alcohol'], df['Malic_Acid'])
+plt.title('Original data')
+plt.xlabel('Alcohol')
+plt.ylabel('Malic Acid')
+
+# Normalized data plot
+plt.subplot(1, 2, 2)
+plt.scatter(wines_norm['Alcohol'], wines_norm['Malic_Acid'])
+plt.title('Normalized data')
+plt.xlabel('Alcohol')
+plt.ylabel('Malic Acid')
+
+plt.tight_layout()
+plt.show()
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+
+# Assuming 'wines' is your DataFrame
+
+# Normalization
+scaler = StandardScaler()
+wines_norm = pd.DataFrame(scaler.fit_transform(wines), columns=wines.columns)
+
+# Original data plot
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.scatter(wines['Alcohol'], wines['Malic_Acid'])
+plt.title('Original data')
+plt.xlabel('Alcohol')
+plt.ylabel('Malic Acid')
+
+# Normalized data plot
+plt.subplot(1, 2, 2)
+plt.scatter(wines_norm['Alcohol'], wines_norm['Malic_Acid'])
+plt.title('Normalized data')
+plt.xlabel('Alcohol')
+plt.ylabel('Malic Acid')
+
+plt.tight_layout()
+plt.show()
+
+
+
+
+from sklearn.cluster import KMeans
+import numpy as np
+
+# Assuming winesNorm is your DataFrame
+
+# Execution of k-means with k=2
+np.random.seed(1234)
+kmeans = KMeans(n_clusters=2, random_state=1234)
+wines_k2 = kmeans.fit(wines_norm)
+
+
+
+
+# Get cluster labels for each point
+cluster_labels = wines_k2.labels_
+
+# Get cluster centers
+cluster_centers = wines_k2.cluster_centers_
+
+import numpy as np
+
+# Calculate cluster sizes
+cluster_sizes = np.bincount(wines_k2.labels_)
+
+# Fit KMeans with k=2
+kmeans_model = KMeans(n_clusters=2, random_state=1234)
+kmeans_model.fit(wines_norm)
+
+# Calculate between-cluster sum of squares
+betweenss = kmeans_model.score(wines_norm)
+print("Between-cluster sum of squares:", -betweenss)  # The score is returned as a negative value
+
+
+import matplotlib.pyplot as plt
+from scipy.spatial.distance import cdist
+
+# Initialize lists to store between-cluster and within-cluster sums of squares
+bss = []
+wss = []
+
+# Run the algorithm for different values of k
+np.random.seed(1234)
+
+for i in range(1, 11):
+    # For each k, fit KMeans and calculate between-cluster and total within-cluster sum of squares
+    kmeans_model = KMeans(n_clusters=i)
+    kmeans_model.fit(wines_norm)
+    bss.append(kmeans_model.score(wines_norm))
+    wss.append(sum(np.min(cdist(wines_norm, kmeans_model.cluster_centers_, 'euclidean'), axis=1)))
+
+# Plot Between-cluster sum of squares vs Choice of k
+plt.subplot(1, 2, 1)
+plt.plot(range(1, 11), bss, marker='o', linestyle='-')
+plt.xlabel('Number of clusters')
+plt.ylabel('Between-cluster sum of squares')
+plt.title('Between-cluster sum of squares vs Choice of k')
+plt.grid()
+
+# Plot Total within-cluster sum of squares vs Choice of k
+plt.subplot(1, 2, 2)
+plt.plot(range(1, 11), wss, marker='o', linestyle='-')
+plt.xlabel('Number of clusters')
+plt.ylabel('Total within-cluster sum of squares')
+plt.title('Total within-cluster sum of squares vs Choice of k')
+plt.grid()
+
+# Show subplots
+plt.tight_layout()
+plt.show()
+
+
+
+ from sklearn.cluster import KMeans
+import pandas as pd
+
+# Execute k-means with k=3
+kmeans_model = KMeans(n_clusters=3, random_state=1234)
+wines_k3 = kmeans_model.fit_predict(wines_norm)
+
+# Assign cluster labels to the dataframe
+wines['cluster'] = wines_k3
+
+# Calculate mean values of each cluster
+means_per_cluster = wines.groupby('cluster').mean()
+print(means_per_cluster)
+
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Combine wines and cluster labels
+wines['Cluster'] = wines_k3
+
+# Select columns 1 to 6 for plotting
+columns_for_plot = wines.columns[1:7]
+
+# Create a pairplot with cluster coloring
+sns.pairplot(wines, vars=columns_for_plot, hue='Cluster', palette='viridis', plot_kws={'alpha': 0.5})
+plt.show()
+
+
+
+
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score, davies_bouldin_score
+
+# Assuming wines_k3 contains the clustering results from K-Means with k=3
+
+kmeans_model = KMeans(n_clusters=3, random_state=1234)
+wines_k3 = kmeans_model.fit_predict(wines_norm)
+
+# Silhouette score
+silhouette_avg = silhouette_score(wines_norm, wines_k3)
+print(f"Silhouette Score: {silhouette_avg}")
+
+# Davies-Bouldin score
+davies_bouldin = davies_bouldin_score(wines_norm, wines_k3)
+print(f"Davies-Bouldin Score: {davies_bouldin}")
+
+
